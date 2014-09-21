@@ -1,5 +1,8 @@
 package com.leou.weather;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -15,14 +18,22 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Picasso.LoadedFrom;
 import com.squareup.picasso.Target;
 
 public class WeatherAppWidgetProvider extends AppWidgetProvider {
 
-	public static final String WIDGET_IDS_KEY = "mywidgetproviderwidgetids";
-	public static final String WIDGET_DATA_KEY = "mywidgetproviderwidgetdata";
+	static final String WIDGET_IDS_KEY = "mywidgetproviderwidgetids";
+	static final String WIDGET_DATA_KEY = "mywidgetproviderwidgetdata";
+	static final String MOS2_1024N = "http://www.cwb.gov.tw/V7/js/MOS2_1024N.js";
+	static final String CWB_URL = "http://www.cwb.gov.tw";
+	static final String MATCH_PATTERN = "/V7/observe/radar/Data/MOS2_1024N/\\d{4}-\\d{2}-\\d{2}_\\d{4}.2MOS3NC.jpg";
 
 	@Override
 	public void onAppWidgetOptionsChanged(Context context,
@@ -76,7 +87,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 		// TODO Auto-generated method stub
 		Log.d("TAG", "onUpdate");
 		super.onUpdate(context, appWidgetManager, appWidgetIds);
-		RemoteViews views = new RemoteViews("com.leou.weather",
+		RemoteViews views = new RemoteViews(context.getPackageName(),
 				R.layout.weather_appwidget);
 
 		views.setImageViewResource(R.id.imageView, R.drawable.test);
@@ -92,12 +103,56 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 
 		for (int i = 0; i < appWidgetIds.length; i++) {
 			int appWidgetId = appWidgetIds[i];
-			Picasso.with(context)
-					.load("http://www.cwb.gov.tw/V7/observe/radar/Data/MOS2_1024N/2014-09-20_2324.2MOS3NC.jpg")
-					.into(new Target2(views, appWidgetManager, appWidgetId));
+
+			// get url list
+			RequestQueue mQueue = Volley.newRequestQueue(context);
+			StringRequest stringRequest = new StringRequest(MOS2_1024N,
+					new ResponseListener2(views, appWidgetManager, appWidgetId,
+							context), new Response.ErrorListener() {
+
+						@Override
+						public void onErrorResponse(VolleyError arg0) {
+							// TODO Auto-generated method stub
+							Log.e("TAG", arg0.getMessage(), arg0);
+						}
+					});
+			mQueue.add(stringRequest);
 
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 		}
+	}
+
+	private class ResponseListener2 implements Response.Listener<String> {
+		RemoteViews views;
+		AppWidgetManager appWidgetManager;
+		int appWidgetId;
+		Context context;
+
+		public ResponseListener2(RemoteViews views,
+				AppWidgetManager appWidgetManager, int appWidgetId,
+				Context context) {
+			super();
+			this.views = views;
+			this.appWidgetManager = appWidgetManager;
+			this.appWidgetId = appWidgetId;
+			this.context = context;
+		}
+
+		@Override
+		public void onResponse(String response) {
+			// TODO Auto-generated method stub
+			Log.d("TAG", "onResponse : " + response);
+			Pattern pattern = Pattern
+					.compile(MATCH_PATTERN);
+			Matcher matcher = pattern.matcher(response);
+			if (matcher.find()) {
+				Log.d("TAG", "matcher : " + matcher.group());
+				Picasso.with(context)
+						.load(CWB_URL + matcher.group())
+						.into(new Target2(views, appWidgetManager, appWidgetId));
+			}
+		}
+
 	}
 
 	private class Target2 implements Target {
@@ -122,6 +177,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 		@Override
 		public void onBitmapLoaded(Bitmap arg0, LoadedFrom arg1) {
 			// TODO Auto-generated method stub
+			Log.d("TAG", "onBitmapLoaded : " + arg0.getHeight());
 			Bitmap bitmap = arg0.copy(Config.ARGB_8888, true);
 			Canvas canvas = new Canvas(bitmap);
 			Paint paint = new Paint();
@@ -134,9 +190,6 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 			canvas.drawCircle(50, 50, 7, paint);
 
 			views.setImageViewBitmap(R.id.imageView, bitmap);
-
-			// not important
-			views.setTextViewText(R.id.HelloTextView01, "haha");
 
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 		}
