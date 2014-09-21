@@ -90,7 +90,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 		RemoteViews views = new RemoteViews(context.getPackageName(),
 				R.layout.weather_appwidget);
 
-		views.setImageViewResource(R.id.imageView, R.drawable.test);
+		views.setImageViewResource(R.id.imageView, R.drawable.clickhere);
 
 		// set onClkListener
 		Intent updateIntent = new Intent();
@@ -142,13 +142,13 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 		public void onResponse(String response) {
 			// TODO Auto-generated method stub
 			Log.d("TAG", "onResponse : " + response);
-			Pattern pattern = Pattern
-					.compile(MATCH_PATTERN);
+			Pattern pattern = Pattern.compile(MATCH_PATTERN);
 			Matcher matcher = pattern.matcher(response);
 			if (matcher.find()) {
 				Log.d("TAG", "matcher : " + matcher.group());
 				Picasso.with(context)
 						.load(CWB_URL + matcher.group())
+						.placeholder(R.drawable.lodingimg)
 						.into(new Target2(views, appWidgetManager, appWidgetId));
 			}
 		}
