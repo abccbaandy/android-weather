@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -132,7 +133,8 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 			// longitude 120.0 - 121.998
 			// latitude 23.474 - 25.47 & 21.874 - 23.87 = 21.874 - 25.47
 			// two image(N&S) overlay (23.87-23.474)/(25.47-23.474)*500=99.198
-			longitude = (longitude - 120.0) / (121.998 - 120.0) * (500 - 1) + 1;
+			longitude = (longitude - 120.0) / (121.998 - 120.0) * (500 - 1) + 1
+					- 16;
 			latitude = 500 + 401 - (latitude - 21.874) / (25.47 - 21.874)
 					* (500 + 401 - 1) + 1;
 			Log.d("TAG getLastKnownLocation calc =", "X=" + longitude + ", Y="
@@ -191,7 +193,8 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 			// longitude 120.0 - 121.998
 			// latitude 23.474 - 25.47 & 21.874 - 23.87 = 21.874 - 25.47
 			// two image(N&S) overlay (23.87-23.474)/(25.47-23.474)*500=99.198
-			longitude = (longitude - 120.0) / (121.998 - 120.0) * (500 - 1) + 1;
+			longitude = (longitude - 120.0) / (121.998 - 120.0) * (500 - 1) + 1
+					- 16;
 			latitude = 500 + 401 - (latitude - 21.874) / (25.47 - 21.874)
 					* (500 + 401 - 1) + 1;
 			Log.d("TAG Location calc =", "X=" + longitude + ", Y=" + latitude);
@@ -302,8 +305,14 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
 			int x = prefs.getInt("x", 0);
 			int y = prefs.getInt("y", 0);
 
+			// draw icon
+			Bitmap icon = BitmapFactory.decodeResource(context.getResources(),
+					R.drawable.arrow);
+			canvas.drawBitmap(icon, x, y, paint);
+
 			// draw circle
-			canvas.drawCircle(x, y, 7, paint);
+			// canvas.drawCircle(x, y, 7, paint);
+
 			Log.d("TAG drawCircle : ", "X=" + x + ", Y=" + y);
 
 			views.setImageViewBitmap(R.id.imageView, bitmap);
